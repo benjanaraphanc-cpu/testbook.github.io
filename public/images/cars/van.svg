@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" role="img" aria-label="รถตู้">
+  <ellipse cx="200" cy="198" rx="165" ry="9" fill="#1f2d2c" opacity=".14"/>
+  <path d="M26 168 V80 Q26 62 44 62 H284 Q300 62 308 74 L336 112 L362 118 Q376 121 376 138 V168 Q376 176 367 176 H35 Q26 176 26 168 Z" fill="#f7f9f9" stroke="#8fa5a2" stroke-width="3" stroke-linejoin="round"/>
+  <g fill="#bfe0e6" stroke="#8fa5a2" stroke-width="2.5" stroke-linejoin="round">
+    <rect x="42" y="76" width="52" height="34" rx="5"/>
+    <rect x="102" y="76" width="52" height="34" rx="5"/>
+    <rect x="162" y="76" width="52" height="34" rx="5"/>
+    <rect x="222" y="76" width="52" height="34" rx="5"/>
+    <path d="M282 76 H296 Q302 76 306 82 L322 110 H282 Z"/>
+  </g>
+  <rect x="26" y="130" width="350" height="10" fill="#006664" opacity=".9"/>
+  <rect x="26" y="142" width="350" height="4" fill="#c9a227"/>
+  <rect x="358" y="124" width="18" height="11" rx="3" fill="#ffe9a8" stroke="#c9a227" stroke-width="1.5"/>
+  <rect x="26" y="116" width="10" height="12" rx="3" fill="#e5564b"/>
+  <line x1="162" y1="112" x2="162" y2="168" stroke="#8fa5a2" stroke-width="2"/>
+  <circle cx="96" cy="176" r="27" fill="#2b3433"/>
+  <circle cx="96" cy="176" r="14" fill="#c9d3d1"/>
+  <circle cx="96" cy="176" r="5" fill="#6b7a78"/>
+  <circle cx="304" cy="176" r="27" fill="#2b3433"/>
+  <circle cx="304" cy="176" r="14" fill="#c9d3d1"/>
+  <circle cx="304" cy="176" r="5" fill="#6b7a78"/>
+</svg>

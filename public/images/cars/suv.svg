@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 225" role="img" aria-label="รถ SUV">
+  <ellipse cx="200" cy="198" rx="162" ry="9" fill="#1f2d2c" opacity=".14"/>
+  <path d="M30 166 V132 Q30 118 46 114 L92 106 L120 70 Q128 62 142 62 H282 Q296 62 304 72 L322 104 L352 110 Q372 114 372 134 V166 Q372 175 362 175 H40 Q30 175 30 166 Z" fill="#3d4b4a" stroke="#222c2b" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M104 104 L128 74 Q132 70 142 70 H190 V104 Z" fill="#a9ccd3" stroke="#222c2b" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="M200 70 H278 Q286 70 291 78 L306 104 H200 Z" fill="#a9ccd3" stroke="#222c2b" stroke-width="2.5" stroke-linejoin="round"/>
+  <rect x="120" y="58" width="168" height="5" rx="2.5" fill="#222c2b"/>
+  <rect x="30" y="136" width="342" height="8" fill="#c9a227" opacity=".9"/>
+  <rect x="354" y="122" width="18" height="11" rx="3" fill="#ffe9a8" stroke="#c9a227" stroke-width="1.5"/>
+  <rect x="30" y="120" width="12" height="11" rx="3" fill="#e5564b"/>
+  <rect x="200" y="118" width="20" height="4" rx="2" fill="#c9d3d1"/>
+  <circle cx="106" cy="175" r="27" fill="#2b3433"/>
+  <circle cx="106" cy="175" r="14" fill="#c9d3d1"/>
+  <circle cx="106" cy="175" r="5" fill="#6b7a78"/>
+  <circle cx="300" cy="175" r="27" fill="#2b3433"/>
+  <circle cx="300" cy="175" r="14" fill="#c9d3d1"/>
+  <circle cx="300" cy="175" r="5" fill="#6b7a78"/>
+</svg>

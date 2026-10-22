@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="/css/style.css" rel="stylesheet">
+<title>จองรถ | ระบบจองรถ ม.เกษตรศาสตร์</title>
+</head>
+<body>
+<div id="navbar"></div>
+
+<main class="container py-4">
+  <div class="mb-4">
+    <h2 class="page-title"><i class="bi bi-car-front-fill me-2"></i>จองรถยนต์</h2>
+    <p class="page-sub">เลือกรถ ระบุเส้นทางและช่วงเวลา ระบบจะตรวจสอบการจองซ้ำให้ทันที</p>
+  </div>
+
+  <form id="bookForm" novalidate>
+    <div class="row g-4">
+      <!-- ซ้าย: เลือกรถ -->
+      <div class="col-lg-7">
+        <div class="ku-card mb-4">
+          <div class="ku-card-header"><i class="bi bi-1-circle-fill"></i>เลือกรถที่ต้องการจอง</div>
+          <div class="ku-card-body">
+            <div class="row g-3" id="carGrid">
+              <div class="col-12 empty-state">กำลังโหลดรายการรถ...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ku-card">
+          <div class="ku-card-header"><i class="bi bi-calendar-x"></i>ช่วงเวลาที่รถคันที่เลือกถูกจองแล้ว</div>
+          <div class="ku-card-body" id="busyList"><span class="text-muted">กรุณาเลือกรถก่อน</span></div>
+        </div>
+      </div>
+
+      <!-- ขวา: ข้อมูลการจอง -->
+      <div class="col-lg-5">
+        <div class="ku-card" style="position:sticky;top:84px">
+          <div class="ku-card-header"><i class="bi bi-2-circle-fill"></i>ข้อมูลการจอง</div>
+          <div class="ku-card-body">
+
+            <!-- สรุป: รูปรถ ทะเบียน จุดรับ จุดส่ง -->
+            <div class="summary-img mb-3"><img id="sumImg" src="/images/cars/sedan.svg" alt="รถที่เลือก" style="opacity:.35"></div>
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div>
+                <div class="car-plate" id="sumPlate">ยังไม่ได้เลือกรถ</div>
+                <div class="car-meta" id="sumName">เลือกรถจากรายการด้านซ้าย</div>
+              </div>
+              <span class="badge text-bg-light border" id="sumSeats" style="display:none"></span>
+            </div>
+            <div class="route-line mb-3 p-3 rounded-3" style="background:var(--ku-green-soft)">
+              <div class="route-dots"><i class="bi bi-geo-alt-fill"></i><div class="bar"></div><i class="bi bi-flag-fill"></i></div>
+              <div class="route-text flex-grow-1">
+                <div class="lbl">จุดหมายรับ</div><div class="val" id="sumPickup">-</div>
+                <div class="lbl mt-2">จุดหมายส่ง</div><div class="val" id="sumDropoff">-</div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="pickup">จุดหมายรับ <span class="text-danger">*</span></label>
+              <input class="form-control" id="pickup" list="places" maxlength="200" placeholder="เช่น อาคารอำนวยการ บางเขน" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="dropoff">จุดหมายส่ง <span class="text-danger">*</span></label>
+              <input class="form-control" id="dropoff" list="places" maxlength="200" placeholder="เช่น สนามบินดอนเมือง" required>
+            </div>
+            <datalist id="places">
+              <option value="มหาวิทยาลัยเกษตรศาสตร์ บางเขน"></option>
+              <option value="มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตกำแพงแสน"></option>
+              <option value="มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตศรีราชา"></option>
+              <option value="มหาวิทยาลัยเกษตรศาสตร์ วิทยาเขตเฉลิมพระเกียรติ จ.สกลนคร"></option>
+              <option value="สนามบินดอนเมือง"></option>
+              <option value="สนามบินสุวรรณภูมิ"></option>
+              <option value="สถานีขนส่งหมอชิต"></option>
+            </datalist>
+
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label class="form-label" for="start">วัน-เวลาเริ่มต้น <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" id="start" required>
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label" for="end">วัน-เวลาสิ้นสุด <span class="text-danger">*</span></label>
+                <input type="datetime-local" class="form-control" id="end" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="passengers">จำนวนผู้โดยสาร <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" id="passengers" min="1" value="1" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="purpose">วัตถุประสงค์การเดินทาง <span class="text-danger">*</span></label>
+              <textarea class="form-control" id="purpose" rows="2" maxlength="255" placeholder="เช่น ประชุม / ลงพื้นที่ / รับ-ส่งวิทยากร" required></textarea>
+            </div>
+
+            <div id="availMsg" class="avail-msg mb-3"></div>
+
+            <button type="submit" class="btn btn-ku btn-lg w-100" id="btnSubmit"><i class="bi bi-send-check me-1"></i>ส่งคำขอจองรถ</button>
+            <div class="text-muted small text-center mt-2">หลังส่งคำขอ สถานะจะเป็น "รออนุมัติ" จนกว่าผู้ดูแลระบบจะพิจารณา</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</main>
+<footer class="ku-footer">ระบบจองรถยนต์ มหาวิทยาลัยเกษตรศาสตร์</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/common.js"></script>
+<script>
+(async function () {
+  await KU.initPage('book', 'user');
+
+  const $ = (id) => document.getElementById(id);
+  const params = new URLSearchParams(location.search);
+  let cars = [];
+  let events = [];
+  let selected = null;
+  let checkTimer = null;
+  let checkSeq = 0;
+
+  // ---------- ค่าเริ่มต้นของวัน-เวลา ----------
+  const nowLocal = new Date();
+  $('start').min = KU.localInputValue(nowLocal);
+  $('end').min = KU.localInputValue(nowLocal);
+  (function setDefaultTimes() {
+    const date = params.get('date');
+    let s;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date || '')) {
+      s = new Date(date + 'T08:00');
+      if (s < nowLocal) { s = new Date(nowLocal); s.setMinutes(0, 0, 0); s.setHours(s.getHours() + 1); }
+    } else {
+      s = new Date(nowLocal); s.setMinutes(0, 0, 0); s.setHours(s.getHours() + 1);
+    }
+    const e = new Date(s.getTime() + 4 * 3600 * 1000);
+    $('start').value = KU.localInputValue(s);
+    $('end').value = KU.localInputValue(e);
+  })();
+
+  // ---------- โหลดรถ + การจองที่มีอยู่ ----------
+  try {
+    [cars, events] = await Promise.all([KU.api('/api/cars'), KU.api('/api/bookings/calendar')]);
+  } catch (err) { KU.toast(err.message, 'danger'); }
+
+  const shortPlate = (p) => p.split(' ').slice(0, 2).join(' ');
+
+  function renderCars() {
+    if (!cars.length) { $('carGrid').innerHTML = '<div class="col-12 empty-state"><i class="bi bi-car-front"></i>ยังไม่มีรถในระบบ</div>'; return; }
+    $('carGrid').innerHTML = cars.map((c) => {
+      const off = c.status !== 'available';
+      return '<div class="col-sm-6">' +
+        '<div class="car-option' + (off ? ' disabled' : '') + (selected && selected.id === c.id ? ' selected' : '') + '" data-id="' + c.id + '">' +
+          '<div class="car-thumb"><img src="' + KU.carImage(c.image_url) + '" alt="' + KU.esc(c.brand + ' ' + c.model) + '"></div>' +
+          '<div class="car-info">' +
+            '<div class="car-plate">' + KU.esc(c.plate_number) + '</div>' +
+            '<div class="car-meta">' + KU.esc(c.brand + ' ' + c.model) + ' · ' + KU.esc(c.car_type) + '</div>' +
+            '<div class="car-meta"><i class="bi bi-people me-1"></i>นั่งได้ ' + c.seats + ' คน ' +
+              (off ? '<span class="badge text-bg-secondary ms-1">ซ่อมบำรุง</span>' : '<span class="badge ms-1" style="background:var(--ku-green-soft);color:var(--ku-green-dark)">พร้อมใช้งาน</span>') + '</div>' +
+          '</div></div></div>';
+    }).join('');
+  }
+
+  function renderBusy() {
+    if (!selected) { $('busyList').innerHTML = '<span class="text-muted">กรุณาเลือกรถก่อน</span>'; return; }
+    const nowStr = KU.localInputValue(new Date());
+    const list = events.filter((e) => e.car_id === selected.id && e.end.slice(0, 16) >= nowStr).slice(0, 10);
+    if (!list.length) { $('busyList').innerHTML = '<div class="text-success"><i class="bi bi-check-circle me-1"></i>ยังไม่มีการจองที่กำลังจะมาถึง รถว่างทุกช่วงเวลา</div>'; return; }
+    $('busyList').innerHTML = '<ul class="list-group list-group-flush">' + list.map((e) =>
+      '<li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">' +
+      '<span><i class="bi bi-clock me-1 text-muted"></i>' + KU.esc(KU.fmtRange(e.start, e.end)) + '</span>' + KU.statusBadge(e.status) + '</li>').join('') + '</ul>';
+  }
+
+  function renderSummary() {
+    if (selected) {
+      $('sumImg').src = KU.carImage(selected.image_url);
+      $('sumImg').style.opacity = 1;
+      $('sumPlate').textContent = selected.plate_number;
+      $('sumName').textContent = selected.brand + ' ' + selected.model + ' · ' + selected.car_type;
+      $('sumSeats').style.display = '';
+      $('sumSeats').innerHTML = '<i class="bi bi-people me-1"></i>' + selected.seats + ' ที่นั่ง';
+      $('passengers').max = selected.seats;
+    } else {
+      $('sumImg').style.opacity = .35;
+      $('sumPlate').textContent = 'ยังไม่ได้เลือกรถ';
+      $('sumName').textContent = 'เลือกรถจากรายการด้านซ้าย';
+      $('sumSeats').style.display = 'none';
+    }
+    $('sumPickup').textContent = $('pickup').value.trim() || '-';
+    $('sumDropoff').textContent = $('dropoff').value.trim() || '-';
+  }
+
+  function selectCar(id) {
+    const c = cars.find((x) => x.id === id);
+    if (!c || c.status !== 'available') return;
+    selected = c;
+    renderCars(); renderBusy(); renderSummary(); scheduleCheck();
+  }
+
+  $('carGrid').addEventListener('click', (e) => {
+    const card = e.target.closest('.car-option');
+    if (!card) return;
+    if (card.classList.contains('disabled')) { KU.toast('รถคันนี้อยู่ระหว่างซ่อมบำรุง ไม่สามารถจองได้', 'warning'); return; }
+    selectCar(Number(card.dataset.id));
+  });
+
+  // ---------- ตรวจสอบการจองซ้ำแบบทันที ----------
+  function showAvail(kind, text) {
+    const el = $('availMsg');
+    el.className = 'avail-msg mb-3 ' + kind;
+    el.innerHTML = '<i class="bi ' + (kind === 'ok' ? 'bi-check-circle-fill' : kind === 'bad' ? 'bi-exclamation-triangle-fill' : 'bi-info-circle-fill') + ' me-1"></i>' + KU.esc(text);
+  }
+  function scheduleCheck() {
+    clearTimeout(checkTimer);
+    checkTimer = setTimeout(checkNow, 350);
+  }
+  async function checkNow() {
+    const el = $('availMsg');
+    if (!selected || !$('start').value || !$('end').value) { el.className = 'avail-msg mb-3'; return true; }
+    const seq = ++checkSeq;
+    try {
+      const r = await KU.api('/api/bookings/check?car_id=' + selected.id + '&start=' + encodeURIComponent($('start').value) + '&end=' + encodeURIComponent($('end').value));
+      if (seq !== checkSeq) return;
+      showAvail(r.available ? 'ok' : 'bad', r.message);
+      return r.available;
+    } catch (err) {
+      if (seq !== checkSeq) return;
+      showAvail(err.status === 409 ? 'bad' : 'info', err.message);
+      return false;
+    }
+  }
+
+  ['start', 'end'].forEach((id) => $(id).addEventListener('change', () => {
+    if (id === 'start' && $('start').value && (!$('end').value || $('end').value <= $('start').value)) {
+      const s = new Date($('start').value);
+      $('end').value = KU.localInputValue(new Date(s.getTime() + 2 * 3600 * 1000));
+    }
+    scheduleCheck();
+  }));
+  ['pickup', 'dropoff'].forEach((id) => $(id).addEventListener('input', renderSummary));
+
+  // ---------- ส่งฟอร์ม ----------
+  $('bookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!selected) { KU.toast('กรุณาเลือกรถที่ต้องการจอง', 'warning'); return; }
+    const body = {
+      car_id: selected.id,
+      pickup_location: $('pickup').value.trim(),
+      dropoff_location: $('dropoff').value.trim(),
+      start: $('start').value,
+      end: $('end').value,
+      passengers: Number($('passengers').value),
+      purpose: $('purpose').value.trim()
+    };
+    if (!body.pickup_location || !body.dropoff_location || !body.start || !body.end || !body.purpose) {
+      KU.toast('กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบ', 'warning'); return;
+    }
+    if (body.end <= body.start) { KU.toast('เวลาสิ้นสุดต้องอยู่หลังเวลาเริ่มต้น', 'danger'); return; }
+    if (body.passengers > selected.seats) { KU.toast('รถคันนี้นั่งได้สูงสุด ' + selected.seats + ' คน', 'danger'); return; }
+
+    const btn = $('btnSubmit');
+    btn.disabled = true;
+    try {
+      await KU.api('/api/bookings', { method: 'POST', body });
+      KU.toast('ส่งคำขอจองเรียบร้อย รอผู้ดูแลระบบอนุมัติ', 'success');
+      setTimeout(() => { location.href = '/my-bookings'; }, 1200);
+    } catch (err) {
+      // 409 = จองซ้ำ -> ไม่บันทึกและแจ้งเตือนทันที
+      showAvail(err.status === 409 ? 'bad' : 'info', err.message);
+      KU.toast(err.message, 'danger');
+      btn.disabled = false;
+      try { events = await KU.api('/api/bookings/calendar'); renderBusy(); } catch (e2) { /* ข้าม */ }
+    }
+  });
+
+  renderCars();
+  renderSummary();
+  const pre = Number(params.get('car_id'));
+  if (pre) selectCar(pre);
+})();
+</script>
+</body>
+</html>

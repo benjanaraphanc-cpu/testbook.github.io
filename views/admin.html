@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="/css/style.css" rel="stylesheet">
+<title>Admin Dashboard | ระบบจองรถ ม.เกษตรศาสตร์</title>
+</head>
+<body>
+<div id="navbar"></div>
+
+<main class="container-xl py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <h2 class="page-title"><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h2>
+      <p class="page-sub">ตรวจสอบรายการจองทั้งหมด และพิจารณาอนุมัติ / ไม่อนุมัติ</p>
+    </div>
+    <button class="btn btn-outline-ku" id="btnReload"><i class="bi bi-arrow-clockwise me-1"></i>รีเฟรช</button>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-value" id="sPending">-</div><div class="stat-label">รออนุมัติ</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon"><i class="bi bi-check-circle"></i></div><div><div class="stat-value" id="sApproved">-</div><div class="stat-label">อนุมัติแล้ว</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon red"><i class="bi bi-x-circle"></i></div><div><div class="stat-value" id="sRejected">-</div><div class="stat-label">ไม่อนุมัติ</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon grey"><i class="bi bi-slash-circle"></i></div><div><div class="stat-value" id="sCancelled">-</div><div class="stat-label">ผู้จองยกเลิก</div></div></div></div>
+  </div>
+
+  <div class="ku-card">
+    <div class="ku-card-header">
+      <ul class="nav nav-pills nav-pills-ku" id="tabs">
+        <li class="nav-item"><button class="nav-link active" data-f="pending">รออนุมัติ</button></li>
+        <li class="nav-item"><button class="nav-link" data-f="">ทั้งหมด</button></li>
+        <li class="nav-item"><button class="nav-link" data-f="approved">อนุมัติแล้ว</button></li>
+        <li class="nav-item"><button class="nav-link" data-f="rejected">ไม่อนุมัติ</button></li>
+        <li class="nav-item"><button class="nav-link" data-f="cancelled">ยกเลิก</button></li>
+      </ul>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-ku table-hover mb-0">
+        <thead><tr><th>#</th><th>ผู้จอง</th><th>รถ</th><th>ช่วงเวลา</th><th>เส้นทาง</th><th>วัตถุประสงค์</th><th>สถานะ</th><th class="text-end">การดำเนินการ</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="8" class="empty-state">กำลังโหลด...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<footer class="ku-footer">ระบบจองรถยนต์ มหาวิทยาลัยเกษตรศาสตร์ - ส่วนผู้ดูแลระบบ</footer>
+
+<!-- ยืนยันการอนุมัติ / ไม่อนุมัติ -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="rvTitle"></h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div id="rvSummary" class="mb-3 p-3 rounded-3" style="background:var(--ku-green-soft)"></div>
+        <label class="form-label" for="rvNote">หมายเหตุถึงผู้จอง <span class="text-muted small" id="rvNoteHint">(ไม่บังคับ)</span></label>
+        <textarea class="form-control" id="rvNote" rows="2" maxlength="255"></textarea>
+        <div class="text-danger small mt-2 d-none" id="rvErr"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+        <button class="btn" id="rvConfirm"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/common.js"></script>
+<script>
+(async function () {
+  await KU.initPage('admin', 'admin');
+  let filter = 'pending';
+  let list = [];
+  let current = null; // { id, decision }
+  const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+  const $ = (id) => document.getElementById(id);
+
+  async function loadStats() {
+    try {
+      const s = await KU.api('/api/admin/stats');
+      $('sPending').textContent = s.pending; $('sApproved').textContent = s.approved;
+      $('sRejected').textContent = s.rejected; $('sCancelled').textContent = s.cancelled;
+    } catch (err) { KU.toast(err.message, 'danger'); }
+  }
+
+  async function loadList() {
+    try { list = await KU.api('/api/admin/bookings' + (filter ? '?status=' + filter : '')); }
+    catch (err) { KU.toast(err.message, 'danger'); list = []; }
+    render();
+  }
+
+  function render() {
+    const tbody = $('rows');
+    if (!list.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="bi bi-inbox"></i>ไม่มีรายการ</td></tr>'; return; }
+    tbody.innerHTML = list.map((b) => {
+      const actions = b.status === 'pending'
+        ? '<button class="btn btn-sm btn-ku me-1" data-act="approved" data-id="' + b.id + '"><i class="bi bi-check-lg me-1"></i>อนุมัติ</button>' +
+          '<button class="btn btn-sm btn-outline-danger" data-act="rejected" data-id="' + b.id + '"><i class="bi bi-x-lg me-1"></i>ไม่อนุมัติ</button>'
+        : '<span class="text-muted small">' + (b.reviewed_at ? 'พิจารณาเมื่อ ' + KU.esc(KU.fmtDT(b.reviewed_at)) : '-') + '</span>';
+      return '<tr>' +
+        '<td>' + b.id + '</td>' +
+        '<td><div class="fw-semibold">' + KU.esc(b.full_name) + '</div><div class="small text-muted">' + KU.esc(b.department || '-') + '</div>' +
+          '<div class="small text-muted"><i class="bi bi-telephone me-1"></i>' + KU.esc(b.phone || '-') + '</div></td>' +
+        '<td><div class="d-flex align-items-center gap-2"><img class="table-thumb" src="' + KU.carImage(b.image_url) + '" alt="">' +
+          '<div><div class="fw-semibold">' + KU.esc(b.plate_number) + '</div><div class="small text-muted">' + KU.esc(b.brand + ' ' + b.model) + '</div></div></div></td>' +
+        '<td>' + KU.esc(KU.fmtRange(b.start_datetime, b.end_datetime)) + '</td>' +
+        '<td><div><i class="bi bi-geo-alt-fill me-1" style="color:var(--ku-green)"></i>' + KU.esc(b.pickup_location) + '</div>' +
+            '<div><i class="bi bi-flag-fill me-1" style="color:var(--ku-green)"></i>' + KU.esc(b.dropoff_location) + '</div></td>' +
+        '<td>' + KU.esc(b.purpose) + '<div class="small text-muted"><i class="bi bi-people me-1"></i>' + b.passengers + ' คน</div></td>' +
+        '<td>' + KU.statusBadge(b.status) + (b.admin_note ? '<div class="small text-muted mt-1">หมายเหตุ: ' + KU.esc(b.admin_note) + '</div>' : '') + '</td>' +
+        '<td class="text-end text-nowrap">' + actions + '</td></tr>';
+    }).join('');
+  }
+
+  $('tabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-f]');
+    if (!btn) return;
+    document.querySelectorAll('#tabs .nav-link').forEach((x) => x.classList.remove('active'));
+    btn.classList.add('active');
+    filter = btn.dataset.f;
+    loadList();
+  });
+
+  $('rows').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const b = list.find((x) => x.id === Number(btn.dataset.id));
+    if (!b) return;
+    current = { id: b.id, decision: btn.dataset.act };
+    const approve = current.decision === 'approved';
+    $('rvTitle').textContent = approve ? 'ยืนยันการอนุมัติการจอง' : 'ยืนยันการไม่อนุมัติการจอง';
+    $('rvSummary').innerHTML = '<div class="fw-semibold">' + KU.esc(b.full_name) + '</div>' +
+      '<div>' + KU.esc(b.plate_number) + ' · ' + KU.esc(b.brand + ' ' + b.model) + '</div>' +
+      '<div class="small">' + KU.esc(KU.fmtRange(b.start_datetime, b.end_datetime)) + '</div>';
+    $('rvNote').value = '';
+    $('rvNoteHint').textContent = approve ? '(ไม่บังคับ)' : '(แนะนำให้ระบุเหตุผล)';
+    $('rvErr').classList.add('d-none');
+    const ok = $('rvConfirm');
+    ok.className = 'btn ' + (approve ? 'btn-ku' : 'btn-danger');
+    ok.innerHTML = approve ? '<i class="bi bi-check-lg me-1"></i>อนุมัติ' : '<i class="bi bi-x-lg me-1"></i>ไม่อนุมัติ';
+    ok.disabled = false;
+    modal.show();
+  });
+
+  $('rvConfirm').addEventListener('click', async () => {
+    if (!current) return;
+    const ok = $('rvConfirm');
+    ok.disabled = true;
+    const path = current.decision === 'approved' ? 'approve' : 'reject';
+    try {
+      const r = await KU.api('/api/admin/bookings/' + current.id + '/' + path, { method: 'POST', body: { note: $('rvNote').value } });
+      modal.hide();
+      KU.toast(r.message);
+    } catch (err) {
+      $('rvErr').textContent = err.message;
+      $('rvErr').classList.remove('d-none');
+      KU.toast(err.message, 'danger');
+      ok.disabled = false;
+      if (err.status !== 409) return;
+      modal.hide();
+    }
+    loadStats(); loadList();
+  });
+
+  $('btnReload').addEventListener('click', () => { loadStats(); loadList(); });
+  loadStats(); loadList();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="/css/style.css" rel="stylesheet">
+<title>ปฏิทินการจอง | ระบบจองรถ ม.เกษตรศาสตร์</title>
+</head>
+<body>
+<div id="navbar"></div>
+
+<main class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+      <h2 class="page-title"><i class="bi bi-calendar3 me-2"></i>ปฏิทินการจองรถ</h2>
+      <p class="page-sub" id="welcome">ตรวจสอบตารางรถว่างก่อนทำการจอง</p>
+    </div>
+    <a href="/book" class="btn btn-ku btn-lg"><i class="bi bi-plus-circle me-1"></i>จองรถ</a>
+  </div>
+
+  <!-- สรุปตัวเลข -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon"><i class="bi bi-car-front"></i></div><div><div class="stat-value" id="stCars">-</div><div class="stat-label">รถที่เปิดให้จอง</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon"><i class="bi bi-check2-circle"></i></div><div><div class="stat-value" id="stFree">-</div><div class="stat-label">ว่างในขณะนี้</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon amber"><i class="bi bi-hourglass-split"></i></div><div><div class="stat-value" id="stPending">-</div><div class="stat-label">การจองของฉัน (รออนุมัติ)</div></div></div></div>
+    <div class="col-6 col-lg-3"><div class="ku-card stat-card"><div class="stat-icon"><i class="bi bi-patch-check"></i></div><div><div class="stat-value" id="stApproved">-</div><div class="stat-label">การจองของฉัน (อนุมัติแล้ว)</div></div></div></div>
+  </div>
+
+  <!-- ปฏิทิน -->
+  <div class="ku-card">
+    <div class="ku-card-header">
+      <span><i class="bi bi-calendar-week me-1"></i>ตารางการจองที่มีอยู่แล้ว</span>
+      <div class="ms-auto d-flex flex-wrap align-items-center gap-3">
+        <span class="small"><span class="legend-dot" style="background:var(--ku-green)"></span>อนุมัติแล้ว</span>
+        <span class="small"><span class="legend-dot" style="background:#f4c542"></span>รออนุมัติ</span>
+        <span class="small"><span class="legend-dot" style="background:#fff;box-shadow:0 0 0 2px var(--ku-gold)"></span>ของฉัน</span>
+        <select id="carFilter" class="form-select form-select-sm" style="width:auto;min-width:220px">
+          <option value="">รถทุกคัน</option>
+        </select>
+      </div>
+    </div>
+    <div class="ku-card-body">
+      <div id="calendar"></div>
+    </div>
+  </div>
+  <p class="text-center text-muted small mt-3 mb-0"><i class="bi bi-info-circle me-1"></i>คลิกที่ช่องวันที่ในปฏิทินเพื่อเริ่มจองรถในวันนั้น หรือคลิกที่รายการเพื่อดูรายละเอียด</p>
+</main>
+<footer class="ku-footer">ระบบจองรถยนต์ มหาวิทยาลัยเกษตรศาสตร์</footer>
+
+<!-- รายละเอียดการจอง -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title"><i class="bi bi-car-front-fill me-2" style="color:var(--ku-green)"></i>รายละเอียดการจอง</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="eventBody"></div>
+      <div class="modal-footer"><button class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
+<script src="/js/common.js"></script>
+<script>
+(async function () {
+  const user = await KU.initPage('home', 'user');
+  document.getElementById('welcome').textContent = 'สวัสดี ' + user.full_name + ' - ตรวจสอบตารางรถว่างก่อนทำการจอง';
+
+  let cars = [];
+  let events = [];
+
+  try {
+    [cars, events] = await Promise.all([KU.api('/api/cars'), KU.api('/api/bookings/calendar')]);
+  } catch (err) { KU.toast(err.message, 'danger'); }
+
+  // ตัวกรองรถ
+  const filter = document.getElementById('carFilter');
+  cars.forEach((c) => {
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = c.plate_number.split(' ').slice(0, 2).join(' ') + ' - ' + c.brand + ' ' + c.model;
+    filter.appendChild(o);
+  });
+
+  // ตัวเลขสรุป
+  const now = new Date();
+  const available = cars.filter((c) => c.status === 'available');
+  const busyIds = new Set(events.filter((e) => new Date(e.start) <= now && now < new Date(e.end)).map((e) => e.car_id));
+  document.getElementById('stCars').textContent = available.length;
+  document.getElementById('stFree').textContent = available.filter((c) => !busyIds.has(c.id)).length;
+  try {
+    const mine = await KU.api('/api/bookings/mine');
+    document.getElementById('stPending').textContent = mine.filter((b) => b.status === 'pending').length;
+    document.getElementById('stApproved').textContent = mine.filter((b) => b.status === 'approved').length;
+  } catch (e) { /* ข้ามได้ */ }
+
+  const shortPlate = (p) => p.split(' ').slice(0, 2).join(' ');
+  const modal = new bootstrap.Modal(document.getElementById('eventModal'));
+
+  const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    locale: 'th',
+    initialView: 'dayGridMonth',
+    height: 'auto',
+    firstDay: 0,
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listWeek' },
+    buttonText: { today: 'วันนี้', month: 'เดือน', week: 'สัปดาห์', list: 'รายการ' },
+    noEventsText: 'ไม่มีการจองในช่วงนี้',
+    dayMaxEvents: 3,
+    moreLinkText: (n) => '+อีก ' + n + ' รายการ',
+    eventTimeFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
+    events: (info, success) => {
+      const carId = filter.value;
+      success(events.filter((e) => !carId || String(e.car_id) === carId).map((e) => ({
+        id: e.id,
+        title: shortPlate(e.plate_number) + ' ' + e.car_name,
+        start: e.start,
+        end: e.end,
+        classNames: ['ev-' + e.status].concat(e.mine ? ['ev-mine'] : []),
+        extendedProps: e
+      })));
+    },
+    dateClick: (info) => {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (info.date < today) { KU.toast('ไม่สามารถจองย้อนหลังได้', 'warning'); return; }
+      location.href = '/book?date=' + info.dateStr.slice(0, 10) + (filter.value ? '&car_id=' + filter.value : '');
+    },
+    eventClick: (info) => {
+      const e = info.event.extendedProps;
+      document.getElementById('eventBody').innerHTML =
+        '<div class="mb-2">' + KU.statusBadge(e.status) + (e.mine ? ' <span class="badge text-bg-warning ms-1">การจองของฉัน</span>' : '') + '</div>' +
+        '<dl class="row mb-0">' +
+        '<dt class="col-4">รถ</dt><dd class="col-8">' + KU.esc(e.car_name) + '</dd>' +
+        '<dt class="col-4">ทะเบียน</dt><dd class="col-8 fw-semibold">' + KU.esc(e.plate_number) + '</dd>' +
+        '<dt class="col-4">ช่วงเวลา</dt><dd class="col-8">' + KU.esc(KU.fmtRange(e.start, e.end)) + '</dd>' +
+        (e.mine ? '<dt class="col-4">จุดรับ</dt><dd class="col-8">' + KU.esc(e.pickup_location) + '</dd>' +
+                  '<dt class="col-4">จุดส่ง</dt><dd class="col-8">' + KU.esc(e.dropoff_location) + '</dd>' : '') +
+        '</dl>';
+      modal.show();
+    }
+  });
+  calendar.render();
+  filter.addEventListener('change', () => calendar.refetchEvents());
+})();
+</script>
+</body>
+</html>
